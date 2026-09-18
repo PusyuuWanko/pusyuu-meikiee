@@ -2,8 +2,8 @@
 /*****************************************
   *----------------------------------
   |  ThisScriptVersion: 2.0.0     |
-  |  © 2026 ISAMI ABE             |
-  |  License: MIT                 |
+  |  © 2026 By ISAMI ABE          |
+  |  License: MIT License         |
   |  SPDX-License-Identifier: MIT |
   |  meikiee_client (共有メイキィクライアント) |
 ----------------------------------*

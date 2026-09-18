@@ -2,11 +2,15 @@
 /**
  * Pusyuu メイキー (Meikee) — データベースを使わないアカウント基盤 / SSOプロバイダ
  *
- * Copyright (c) 2026 ISAMI ABE
+ * Copyright (c) 2021-2026 ISAMI ABE
  * SPDX-License-Identifier: MIT
  *
  * 配布条件はリポジトリ同梱の LICENSE を参照してください。
  * この表記を残したまま、自由に利用・改変・再配布できます。
+ *
+ * (このファイル末尾、</head>の直前にも同じ内容のカードがHTMLコメントとして
+ *  入っています。あちらは配信されるページのソースに出るためのもの、ここは
+ *  ソースファイルそのものに対する表記です。両方とも消さないでください。)
  */
 
 /**
@@ -1243,6 +1247,20 @@ final class PDriveEngine {
   /**
    * (userid, service)単位で読み込み→変更→書き込みを直列化する。$fnは戻り値を
    * そのまま返す(この関数自体はロック取得可否だけを見る。取得できなければnull)。
+   *
+   * 【この関数はフォルダを作る、という副作用を忘れないこと】ロックの実体は
+   * <storage_id>/<service>/.lock なので、ロックを取るにはまずそのフォルダが
+   * 要る。つまり「何も書かない操作」でもここを通せばフォルダが生まれる。
+   * 呼び出す前に「本当に書く(または本当に消す物がある)のか」を確かめること。
+   * 実際、self::engineDelete()が無条件にここを通していた頃は、存在しないキーを
+   * 消すだけで空フォルダと0バイトの.lockが残っていた。
+   *
+   * 【残った空フォルダを後から掃除しないこと】.lockを消して片付けたくなるが、
+   * やってはいけない。誰かがそのファイルを開いてロックを保持している最中に
+   * unlink()すると、次に来た要求は「新しく作られた別のファイル」でロックを取る。
+   * 両者が同時に書けてしまい、直列化そのものが静かに壊れる(しかも同時アクセスが
+   * 重なった時にしか起きないので、壊れていることに気づけない)。空フォルダ自体は
+   * 無害で、アカウント削除時に self::engineDeleteUser() が丸ごと消す。放置が正解。
    */
   private static function withLock(string $userid, string $service, callable $fn) {
     $dir = self::serviceDir($userid, $service);
@@ -1395,6 +1413,22 @@ final class PDriveEngine {
     if (!self::isSafeSegment($userid) || !self::isSafeSegment($service) || !self::isSafeSegment($key)) {
       return ['ok' => false, 'error' => 'invalid_input', 'message' => 'userid/service/keyの形式が不正です。'];
     }
+
+    // 【ロックを取る前にフォルダの有無を見ること】self::withLock()はロック
+    // ファイルを置くために<storage_id>/<service>/をmkdir()する(あちらの
+    // コメント参照)。そのため以前はここが無条件にロックを取っていて、
+    // 「存在しないキーを消す」という何も起きないはずの操作が、空のフォルダと
+    // 0バイトの.lockを新規に作って残していた。実際に、中身が.lockだけの
+    // serviceフォルダが実在アカウントの配下に残っているのが見つかっている。
+    //
+    // フォルダが無いなら消す対象も無いので、ロックを取らずに成功で返す
+    // (元から無い物を消した場合も成功、という他の削除系と同じ冪等の扱い)。
+    // 判定とロック取得の間に他の要求がフォルダを作る可能性はあるが、その場合の
+    // 意味は「こちらの削除が相手の書き込みより前に起きた」であって、実害は無い。
+    if (!is_dir(self::serviceDir($userid, $service))) {
+      return ['ok' => true];
+    }
+
     $deleted = self::withLock($userid, $service, function () use ($userid, $service, $key): bool {
       return self::deleteFileVerified(self::itemFile($userid, $service, $key));
     });
@@ -4417,11 +4451,18 @@ function pmeikieeDispatchApi(string $action): void {
       }
       $putUserid = pmeikieeApiInputStr($input, 'userid');
       // 実在しないstorage_id宛の書き込みは、誰にも参照されない孤立ディレクトリを
-      // 新規に作ってしまうため、書き込み時点でここだけ弾く(get/list/delete/
-      // delete_serviceは、存在しないuseridに対して単に「何もない」を返すだけで
-      // 新規ディレクトリを作らないため検証不要。delete_user・
-      // admin_sweep_orphaned_storageはaccount.jsonlに存在しないstorage_id相手にも
-      // 意図的に動作させたいため対象外)。
+      // 新規に作ってしまうため、書き込み時点でここだけ弾く。
+      //
+      // get/list/delete/delete_serviceは検証不要。存在しないuseridに対して
+      // 単に「何もない」を返すだけで、新規ディレクトリを作らないため。
+      // 【ただしdeleteは自動的にそうなっているわけではない】ロックを取るには
+      // フォルダが要る(PDriveEngine::withLock())ので、素直に書くとdeleteでも
+      // フォルダができてしまう。PDriveEngine::engineDelete()がロックを取る前に
+      // フォルダの有無を確かめることで、初めてここの前提が成立している。
+      // あちらの確認を外すと、この行の「検証不要」が静かに嘘になる。
+      //
+      // delete_user・admin_sweep_orphaned_storageはaccount.jsonlに存在しない
+      // storage_id相手にも意図的に動作させたいため対象外。
       if (!isset(pmeikieeValidStorageIds()[$putUserid])) {
         pmeikieeApiFail('unknown_user', '指定されたユーザーが見つかりません。', 404);
       }
@@ -5750,19 +5791,22 @@ function renderProfileListItems(array $profiles, ?callable $actionRenderer = nul
 
 /**
  * フォロー中一覧(自分がフォローしている相手)。1件ずつ解除できます。
- * following配列は相手の生idを知り得ないハッシュだけを持つため、表示用の
- * ユーザー名・名前を得るにはpmeikieeResolveUserIdHashes()での逆引きが必要です。
+ *
+ * 【逆引き済みの配列を受け取ること】following配列が持つのは相手の生idを
+ * 知り得ないハッシュだけなので、表示用の名前を得るには
+ * pmeikieeResolveUserIdHashes()での逆引き(全アカウント走査)が要ります。
+ * それを以前はこの関数の中で行っていましたが、呼び出し元のサイドバーが
+ * 「フォロー中 N」という件数を別途count()で出しており、退会した相手の
+ * ハッシュが残っている場合に数と一覧が食い違っていました。
+ * 逆引きは呼び出し元で一度だけ行い、その結果をここへ渡す形にしています。
+ * この関数が自分で逆引きし直すように戻すと、その食い違いが復活します。
  */
-function renderFollowingSection(array $user, ?string $returnTo): string {
-  $userData = pmeikieeResolveUserData($user);
-  $followingHashes = is_array($userData['pips']['following'] ?? null) ? $userData['pips']['following'] : [];
-
+function renderFollowingSection(array $profiles, ?string $returnTo): string {
   $html = '<h2>フォロー中</h2>';
-  if (empty($followingHashes)) {
+  if (empty($profiles)) {
     return $html . '<p class="note">まだ誰もフォローしていません。</p>';
   }
 
-  $profiles = pmeikieeResolveUserIdHashes($followingHashes);
   $returnToField = pmeikieeUiHiddenReturnTo($returnTo);
   $serverToken = $_SESSION['server_token'];
   $html .= renderProfileListItems($profiles, function (array $profile) use ($returnToField, $serverToken): string {
@@ -5827,8 +5871,20 @@ function renderEditForm(?string $returnTo, string $noticeHtml = '', bool $notice
   // フォロー中/フォロワー数は本来accounts側が意味を関知しないpips固有のデータ
   // (service='pips', key='following')だが、ユーザーからの明示的な要望により
   // サイドバー表示だけの意図的な例外としてここで直接読みます。
-  $followingList = $userData['pips']['following'] ?? [];
-  $followingCount = is_array($followingList) ? count($followingList) : 0;
+  //
+  // 【件数を配列の長さで数えないこと】following配列が持っているのは相手の
+  // storage_idのハッシュだけで、相手が退会してもこの配列からは消えません
+  // (退会処理が触るのは退会した本人のデータだけで、その人をフォローしていた
+  // 全員の配列を書き換えて回るようなことはしないため)。つまり配列には
+  // 「もう存在しない誰か」のハッシュが残り続けます。
+  // 一覧側(renderFollowingSection())は逆引きできなかったハッシュを黙って
+  // 落とすので、ここでcount()を使うと「フォロー中 3」と出ているのに2件しか
+  // 並ばない、という食い違いが起きます。数と一覧は必ず同じ解決結果から
+  // 作ること。そのためここで一度だけ逆引きし、その結果を一覧へ渡します
+  // (逆引きは全アカウントの走査なので、二度やる意味もありません)。
+  $followingHashes = is_array($userData['pips']['following'] ?? null) ? $userData['pips']['following'] : [];
+  $followingProfiles = pmeikieeResolveUserIdHashes($followingHashes);
+  $followingCount = count($followingProfiles);
   $followerCount = pmeikieeUserDataReverseCount((string)$user['storage_id'], 'pips', 'following');
   $recoveryRemaining = pmeikieeRecoveryCodesRemaining($user);
 
@@ -5904,7 +5960,7 @@ function renderEditForm(?string $returnTo, string $noticeHtml = '', bool $notice
   $sections = '
     <div class="tab-section basic" id="section-basic">' . renderBasicInfoSection($user, $returnTo) . '</div>
     <div class="tab-section password" id="section-password">' . renderPasswordSection($user, $returnTo) . '</div>
-    <div class="tab-section following" id="section-following">' . renderFollowingSection($user, $returnTo) . '</div>
+    <div class="tab-section following" id="section-following">' . renderFollowingSection($followingProfiles, $returnTo) . '</div>
     <div class="tab-section followers" id="section-followers">' . renderFollowersSection($user) . '</div>
     <div class="tab-section storage" id="section-storage">' . renderUserDataUsage($user, $returnTo) . '</div>
     <div class="tab-section recovery" id="section-recovery">' . renderRecoverySection($user, $returnTo) . '</div>
