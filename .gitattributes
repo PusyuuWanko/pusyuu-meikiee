@@ -1,0 +1,10 @@
+# 配置先は Linux の Web サーバなので、改行は LF に固定します。
+# Windows で編集しても混ざらないようにするためのものです。
+* text=auto eol=lf
+
+# 画像等が増えた場合に備えて(現状は該当なし)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary

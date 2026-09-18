@@ -1,0 +1,18 @@
+# このフォルダには利用者のデータ(アバター・各サービスのuserData・
+# アップロードしたファイル)が .enc として入ります。中身はAES-256-GCMで
+# 暗号化されていますが、**このフォルダは公開ディレクトリの内側にあります**。
+#
+# 暗号化は最後の砦であって最初の砦ではありません。HTTPで直接取得できる状態に
+# しておく理由が何も無いので、ここで配信そのものを止めます。
+#
+# nginx を使う場合は、このファイルは読まれません。サーバ設定側で
+#   location ~ /p_drive_storage/ { deny all; }
+# に相当する指定を入れてください。
+
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

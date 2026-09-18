@@ -1,0 +1,42 @@
+# =====================================================================
+# 【これは飾りではありません】
+#
+# このリポジトリの元になった稼働環境では、以下のファイルに実在する利用者の
+# データと暗号鍵が入っています。1行でも消すと、次の `git add .` でそれらが
+# 公開リポジトリへ入ります。取り消せません。
+#
+# 「何が個人情報で何がソフトウェアか」の線引きは、ここと SETUP.md にしか
+# 書かれていません。編集する前に SETUP.md の「公開してはいけない物」を
+# 読んでください。
+# =====================================================================
+
+# --- 利用者データ本体(暗号化済みだが中身は実在するアカウント) ---
+p-meikiee/assets/posts/account.jsonl
+p-meikiee/assets/posts/*.jsonl
+p-meikiee/assets/posts/*.bak
+*.lock
+
+# --- 利用者がアップロードしたファイル・アバター・userData の実体 ---
+# 中身は一切追跡しませんが、配信拒否の .htaccess だけは配布物として含めます
+# (新規に置いた環境が、最初から保護された状態で立ち上がるようにするため)。
+p-meikiee/p_drive_storage/*
+!p-meikiee/p_drive_storage/.htaccess
+
+# --- 暗号鍵と秘密(本来 DocumentRoot の外にある物。念のため) ---
+.pusyuuHiddenFiles/
+*_key.php
+*_credentials.php
+private_key_pem.php
+
+# --- 運用ログ(IP・ユーザー名・セッションが載る) ---
+*.log
+*_trace.jsonl
+*_sweep_log.jsonl
+sessions.jsonl
+
+# --- OS・エディタ ---
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
