@@ -2,8 +2,9 @@
 /*****************************************
   *----------------------------------
   |  ThisScriptVersion: 2.0.0     |
-  |  © 2026 By PusyuuWanko/       |
-  |  License: none                |
+  |  © 2026 ISAMI ABE             |
+  |  License: MIT                 |
+  |  SPDX-License-Identifier: MIT |
   |  meikiee_client (共有メイキィクライアント) |
 ----------------------------------*
   プシューメイキィ(p-meikiee)と話すためのコードは、全プロダクトを通してこの1ファイル
