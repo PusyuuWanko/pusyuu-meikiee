@@ -11,7 +11,8 @@
 
 - `p-meikiee/index.php` — 本体
 - `p-meikiee/assets/styles/` — CSS
-- `client/meikiee_client.php` — クライアント
+- `p-drive/index.php` — ファイル管理画面
+- `main/pusyuusystem/scripts/php_scripts/meikiee_client.php` — クライアント
 - `docs/` — 仕様書
 - `tools/` — セットアップ用スクリプト
 
@@ -35,10 +36,26 @@
 
 ## 1. 置く
 
-`p-meikiee/` を公開ディレクトリへ置きます。バーチャルホストを1つ与えるのが
-想定された形です(例: `https://meikee.example.com/` が `p-meikiee/index.php` を指す)。
+リポジトリの `p-meikiee/`・`p-drive/`・`main/` を、**この階層関係のまま**公開
+ディレクトリへ置きます。サービスごとにバーチャルホストを1つ与えるのが想定された
+形です。
 
-サブディレクトリでも動きますが、Cookie のパスが `/` 固定なので、同じドメインに
+```
+/var/www/html/
+├── p-meikiee/   → https://meikee.example.com/
+├── p-drive/     → https://drive.example.com/
+└── main/pusyuusystem/scripts/php_scripts/meikiee_client.php
+```
+
+**`main/` の位置を動かさないでください。** `p-drive/index.php` は
+`../main/pusyuusystem/scripts/php_scripts/meikiee_client.php` という相対パスで
+クライアントを読みます。見つからないと、致命的エラーにはなりませんが
+アカウント機能だけが畳まれ、マイファイル画面が空になります。
+
+`p-drive/` は任意です。ファイル管理画面が要らないなら置かなくて構いません
+(保存の実体は `p-meikiee/` の中なので、p-meikiee 単体で完全に動きます)。
+
+サブディレクトリ配置でも動きますが、Cookie のパスが `/` 固定なので、同じドメインに
 他のアプリを同居させる場合は衝突に注意してください。
 
 ## 2. 鍵の置き場を作る
@@ -121,8 +138,9 @@ PHP を動かすユーザーに、次の書き込み権限が要ります。
 
 ## 6. 他サービスから使う
 
-`client/meikiee_client.php` を読み込む前に、接続先を `define()` で上書きします。
-既定値は元の稼働環境のものなので、**必ず自分の環境の値に変えてください**。
+`main/pusyuusystem/scripts/php_scripts/meikiee_client.php` を読み込む前に、接続先を
+`define()` で上書きします。既定値は元の稼働環境のものなので、**必ず自分の環境の値に
+変えてください**。`p-drive/index.php` の冒頭が、実際にそうしている見本になります。
 
 ```php
 define('PUSYUU_ACCOUNTS_BASE_URL', 'https://127.0.0.1/index.php');

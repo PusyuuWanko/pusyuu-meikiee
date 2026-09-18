@@ -19,7 +19,8 @@
 アカウントの作成・編集・削除・ログイン・ログアウト・パスワード再設定・リカバリコード・
 フォロー/フォロワー・プロフィール画像、そして各サービスがユーザーごとのデータを
 置くための暗号化ストレージまでが、**`p-meikiee/index.php` という1つのファイル**に
-入っています。
+入っています。そのストレージを人が直接触るための画面(マイファイル)が
+`p-drive/index.php` で、こちらも1ファイルです。
 
 依存パッケージはありません。Composer も、フレームワークも、**データベースも使いません**。
 
@@ -83,22 +84,44 @@ RDBMS を使わないぶん、整合性は「置き方」で担保していま�
 
 ## リポジトリの構成
 
+**ディレクトリの形は、実際に動いていた配置をそのまま写したものです。** この通りに
+置けば、パスを書き換えずに動きます。
+
 ```
 p-meikiee/
-  index.php              本体。これ1つでサービスとして成立します
+  index.php              本体(アカウント + ストレージエンジン)。これ1つで成立します
   assets/styles/         画面のCSS
   assets/posts/          アカウント台帳(account.jsonl)が作られる場所。中身は追跡しません
-client/
-  meikiee_client.php     他サービスがメイキーを呼ぶためのクライアント
-docs/
-  ACCOUNTS_INTEGRATION_SPEC.md   連携仕様(SSO・API・データモデル)
-  P_DRIVE_INTEGRATION_SPEC.md    ユーザーごとストレージの仕様
-tools/
-  generate_key.php       初回セットアップ用の鍵生成
+  p_drive_storage/       利用者データが作られる場所。配信拒否の .htaccess だけ同梱
+
+p-drive/
+  index.php              ストレージの「顔」。ファイル管理画面(マイファイル)
+
+main/pusyuusystem/scripts/php_scripts/
+  meikiee_client.php     各サービスがメイキーを呼ぶためのクライアント
+
+docs/                    連携仕様・ストレージ仕様
+tools/generate_key.php   初回セットアップ用の鍵生成
 ```
 
-`p-meikiee/index.php` は、外部への `require` を2つ持っていますが**どちらも
-`file_exists()` で囲まれた任意の連携** です。このフォルダだけ持ち出しても動きます。
+### なぜ `main/pusyuusystem/...` という深い階層なのか
+
+`p-drive/index.php` が `../main/pusyuusystem/scripts/php_scripts/meikiee_client.php`
+という**相対パス**でクライアントを読むためです。短くしたくなりますが、パスを変えると
+p-drive はクライアントを見つけられず、アカウント機能だけが畳まれた状態で起動します
+(致命的エラーにはならず、理由が画面に出ます)。
+
+### p-meikiee と p-drive の関係
+
+**保存の実体は `p-meikiee/index.php` の中(`PDriveEngine`)にあります。**
+`p-drive/` は画面だけを持ち、自分では1バイトも保存しません。利用者のファイルは
+`p-meikiee/p_drive_storage/<storage_idのハッシュ>/<サービス名>/` へ暗号化されて
+置かれます。したがって **p-drive 単体では意味を成しません**が、逆に p-meikiee は
+p-drive 無しでも完全に動きます(ファイル管理画面が無くなるだけです)。
+
+`p-meikiee/index.php` と `p-drive/index.php` は、いずれも外部への `require` を
+持っていますが**すべて `file_exists()` で囲まれた任意の連携** です。
+それぞれのフォルダだけ持ち出しても起動します。
 
 ## 含まれていないもの
 
