@@ -28,6 +28,12 @@ p-meikiee/p_drive_storage/*
 *_credentials.php
 private_key_pem.php
 
+# 鍵を「作る」スクリプトは配布物です。上の *_key.php が名前だけで
+# 巻き込んでしまうので、ここで明示的に戻します。
+# (実際に一度これで消えていました。鍵そのものは .pusyuuHiddenFiles/ 配下に
+#  できるので、この例外で秘密が漏れることはありません。)
+!tools/generate_key.php
+
 # --- 運用ログ(IP・ユーザー名・セッションが載る) ---
 *.log
 *_trace.jsonl
