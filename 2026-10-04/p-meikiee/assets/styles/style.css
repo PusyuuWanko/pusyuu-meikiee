@@ -1,0 +1,873 @@
+@charset "UTF-8";
+
+/*****************************************
+  *----------------------------------
+  |  ThisCssVersion: 1.0.0        |
+  |  © 2021-2026 By ISAMI ABE     |
+  |  License: MIT License         |
+  |  PusyuuAccounts (mainに準拠)   |
+----------------------------------*
+******************************************/
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #eeffee;
+  color: #000;
+}
+
+/*
+  header/mainはHTML5で追加された要素です。古いブラウザ(IE8以前など、
+  HTML5未対応のもの)はこれらを「知らないタグ」として扱い、既定のdisplayが
+  inlineになります。インライン要素はpaddingの上下やmin-heightが効かない
+  ため、幅・高さがある前提のレイアウトが丸ごと崩れます。ここでdisplay: block
+  を明示しておけば安心です（下の header で改めて display: flex を指定して
+  いますが、flexを理解できないほど古いブラウザはその宣言自体を無視するため、
+  ここで指定した display: blockがそのまま生き残る、という仕組みです）。
+*/
+header,
+main {
+  display: block;
+}
+
+a {
+  color: #00aaff;
+  transition: all 0.3s;
+}
+a:hover {
+  color: #0077aa;
+}
+
+header {
+  position: relative;
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 65px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 20px;
+  z-index: 1;
+}
+header::before {
+  content: "";
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  background: rgba(255,255,255,0.6);
+}
+header h1 {
+  margin: 0;
+  font-size: 22px;
+  color: #009900;
+}
+header p {
+  margin: 0;
+  font-size: 14px;
+}
+
+main {
+  padding: 40px 20px;
+  min-height: calc(100vh - 70px);
+}
+
+/* フォーム類をまとめるカード
+---------------------------------------------*/
+
+.account_card {
+  max-width: 420px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 10px;
+  padding: 25px 30px 30px;
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.15);
+  word-break: break-all;
+}
+.account_card h2 {
+  margin-top: 0;
+  color: #009900;
+  border-bottom: 2px solid #00ff00;
+  padding-bottom: 8px;
+}
+.account_card h3 {
+  color: #cc5500;
+}
+.account_card p {
+  line-height: 1.6;
+}
+
+.account_form {
+  display: flex;
+  flex-direction: column;
+  margin: 15px 0;
+}
+.account_form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: #333;
+}
+.account_form input,
+.account_form textarea {
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+}
+.account_form input:focus,
+.account_form textarea:focus {
+  outline: none;
+  border-color: #00aaff;
+  box-shadow: 0 0 0 2px rgba(0,170,255,0.25);
+}
+.account_form input[type="file"] {
+  border: none;
+  padding: 4px 0;
+}
+/* flexboxのgapに未対応の古いブラウザ向けフォールバック。gapが無いと
+   label同士がくっついてしまうため、<br>を見せて代わりの余白にします。
+   gap対応ブラウザでは下のfeature queryで打ち消してmargin-topと二重に
+   ならないようにします。 */
+.account_form br {
+  display: block;
+  margin-bottom: 12px;
+}
+.account_form > button {
+  align-self: flex-start;
+}
+
+@supports (gap: 12px) {
+  .account_form {
+    gap: 12px;
+  }
+  .account_form label {
+    gap: 4px;
+  }
+  .account_form input,
+  .account_form textarea {
+    margin-top: 0;
+  }
+  .account_form br {
+    display: none;
+  }
+
+  .sidebar-brand {
+    gap: 12px;
+  }
+  .sidebar-avatar {
+    margin-right: 0;
+  }
+
+  .sidebar-stats {
+    gap: 12px;
+  }
+  .sidebar-stats > * {
+    margin: 0;
+  }
+
+  .profile_preview {
+    gap: 15px;
+  }
+  .profile_preview_avatar {
+    margin-right: 0;
+  }
+
+  .userdata_list > li {
+    gap: 10px;
+  }
+  .userdata_list > li > * {
+    margin-right: 0;
+  }
+}
+
+/* サイドバー式設定画面(?account=edit)
+   :has()対応ブラウザでのみタブ切り替えを有効化し、非対応ブラウザでは
+   全セクションを縦に並べて常時表示するフォールバックファースト設計です
+   (main/profileの設定画面と同じ考え方の隠しラジオ+:has()方式)。
+---------------------------------------------*/
+
+.tab-ctrl {
+  display: none;
+}
+
+/* プロダクト一覧(main/p-memoと共通の見た目)
+---------------------------------------------*/
+
+.yokoori {
+  display: flex;
+  flex-wrap: wrap;
+}
+.center {
+  justify-content: center;
+}
+.app_link {
+  text-decoration: none;
+  color: #333;
+  transition: all 0.1s;
+  display: block;
+}
+.app_link:hover {
+  color: #333;
+}
+.app_link:active {
+  background-color: rgba(0,170,255,0.15);
+}
+.app_box-1 {
+  height: 40px;
+  padding: 5px;
+  background-color: #eee;
+  border-radius: 5px;
+}
+.app_name {
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.app_wrapper {
+  text-align: center;
+  margin: 15px;
+  width: 60px;
+  height: 90px;
+  display: inline-block;
+}
+
+.settings-wrapper {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* .settings-wrapperの内側(先頭)に置くお知らせカードです。
+   .settings-wrapper自身のmargin-left(下の@mediaでPC幅にサイドバー分ずらす
+   処理)の内側に置くことで、サイドバーがposition:fixedで左端に被さっていても
+   お知らせが隠れず、.account_cardと同じ見た目で目立つようにしています。 */
+.settings-notice {
+  background: #fff;
+  border-radius: 10px;
+  border-left: 5px solid #00cc66;
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.15);
+  padding: 18px 25px;
+  margin-bottom: 20px;
+}
+.settings-notice p {
+  margin: 0 0 10px;
+  line-height: 1.6;
+}
+.settings-notice p:last-child {
+  margin-bottom: 0;
+}
+/* 失敗の知らせ(「そのメールアドレスは既に使われています。」等)。
+   成功と同じ緑のカードで出すと意味が逆に伝わるため、左の線だけ赤くします。 */
+.settings-notice.error {
+  border-left-color: #dc2626;
+}
+
+/* 狭い画面ではサイドバー→本文の順に縦積み(元の設計のフォールバック)。
+   ある程度幅がある画面(PC)では、main/worksと同じ考え方でサイドバーを
+   position: fixedで左端に固定し、本文側にmargin-leftを付けて回り込まない
+   ようにします(縦積みだけだと余白が多くチープに見えるため)。 */
+@media (min-width: 760px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 300px;
+    margin-bottom: 0;
+    border-radius: 0;
+    box-shadow: 4px 0px 10px rgba(0,0,0,0.1);
+    z-index: 10;
+  }
+  .settings-wrapper {
+    max-width: none;
+    margin-left: 300px;
+    padding-right: 20px;
+  }
+}
+
+.sidebar {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.15);
+  padding: 20px;
+  margin-bottom: 20px;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+}
+.sidebar-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid #00ff00;
+  /* flexboxのgapに未対応の古いブラウザ向けフォールバック。gap対応ブラウザでは
+     下のfeature queryで0に打ち消し、gapと二重にならないようにします。 */
+  margin-right: 12px;
+}
+.sidebar-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sidebar-name {
+  margin: 0;
+  font-weight: bold;
+  color: #009900;
+}
+.sidebar-sub {
+  margin: 0;
+  font-size: 12px;
+  color: #667;
+}
+
+.sidebar-stats {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid #ddd;
+  font-size: 12px;
+  color: #445;
+}
+/* flexboxのgapに未対応の古いブラウザ向けフォールバック(gap対応ブラウザでは
+   下のfeature queryで0に打ち消します)。 */
+.sidebar-stats > * {
+  margin: 0 12px 4px 0;
+}
+.sidebar-stats label {
+  cursor: pointer;
+}
+.sidebar-stats label:hover {
+  text-decoration: underline;
+  color: #00aaff;
+}
+
+.sidebar-tab-labels {
+  display: none; /* :has()未対応ブラウザ向けデフォルト: タブUI自体を出さない */
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #ddd;
+}
+/*
+  :has()に対応していないブラウザ(IE等)は上の.sidebar-tab-labelsが常に
+  非表示になり、代わりにこちらが常時表示のフォールバックになります。
+  タブ切り替えではなく素の<a href="#section-xxx">によるページ内ジャンプなので、
+  :has()はもちろんflexboxのgapにすら対応していない超古いブラウザでも
+  (子要素のmarginだけで)最低限ボタンとして機能します。
+*/
+.sidebar-tab-anchors {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #ddd;
+}
+.sidebar-tab-anchors > .sidebar-tab-label {
+  margin: 3px;
+}
+.sidebar-tab-label {
+  display: inline-block;
+  flex: 1 1 auto;
+  text-align: center;
+  text-decoration: none;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  color: #445;
+  transition: all 0.15s;
+  user-select: none;
+}
+.sidebar-tab-label:hover {
+  border-color: #00aaff;
+  color: #00aaff;
+}
+.sidebar-tab-label.danger {
+  color: #cc5500;
+}
+.sidebar-tab-label.danger:hover {
+  border-color: #ff6600;
+  color: #ff6600;
+}
+
+/* サイドバーが独立した1カラムになる幅では、項目を横並びで折り返すより
+   縦一列に並べたほうが見やすいのでそちらに切り替えます。 */
+@media (min-width: 760px) {
+  .sidebar-tab-labels,
+  .sidebar-tab-anchors {
+    flex-direction: column;
+  }
+  .sidebar-tab-label {
+    text-align: left;
+  }
+}
+
+.sidebar-logout {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #ddd;
+  font-size: 13px;
+}
+
+.tab-section {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.15);
+  padding: 25px 30px 30px;
+  margin-bottom: 20px;
+  word-break: break-all;
+}
+.tab-section h2 {
+  margin-top: 0;
+  color: #009900;
+  border-bottom: 2px solid #00ff00;
+  padding-bottom: 8px;
+}
+.tab-section h3 {
+  color: #cc5500;
+}
+
+.profile_preview {
+  display: flex;
+  align-items: center;
+  margin: 15px 0 25px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #ddd;
+}
+.profile_preview_avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid #00ff00;
+  /* flexboxのgapに未対応の古いブラウザ向けフォールバック(gap対応ブラウザでは
+     下のfeature queryで0に打ち消します)。 */
+  margin-right: 15px;
+}
+.profile_preview_avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.profile_preview_name {
+  margin: 0;
+  font-weight: bold;
+  font-size: 16px;
+}
+.profile_preview_username {
+  margin: 2px 0 6px;
+  font-size: 13px;
+  color: #667;
+}
+.profile_preview_bio {
+  margin: 0;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+@supports selector(:has(*)) {
+  .sidebar-tab-labels {
+    display: flex;
+  }
+  /* :has()対応ブラウザではラジオ+labelの本来のタブUIが使えるので、
+     フォールバック用のジャンプリンクは重複UIとして隠します。 */
+  .sidebar-tab-anchors {
+    display: none;
+  }
+
+  .tab-section {
+    display: none;
+  }
+  body:has(#tab-basic:checked) .tab-section.basic,
+  body:has(#tab-password:checked) .tab-section.password,
+  body:has(#tab-following:checked) .tab-section.following,
+  body:has(#tab-followers:checked) .tab-section.followers,
+  body:has(#tab-storage:checked) .tab-section.storage,
+  body:has(#tab-recovery:checked) .tab-section.recovery,
+  body:has(#tab-products:checked) .tab-section.products,
+  body:has(#tab-delete:checked) .tab-section.delete {
+    display: block;
+  }
+
+  /* .sidebar-tab-label限定にしているのは、フォロー中/フォロワーのタブは
+     サイドバー上部の統計行(.sidebar-stats)にも同じforのlabelがあり、
+     そちらまでアクティブ色に染まってしまわないようにするためです。 */
+  body:has(#tab-basic:checked) .sidebar-tab-label[for="tab-basic"],
+  body:has(#tab-password:checked) .sidebar-tab-label[for="tab-password"],
+  body:has(#tab-following:checked) .sidebar-tab-label[for="tab-following"],
+  body:has(#tab-followers:checked) .sidebar-tab-label[for="tab-followers"],
+  body:has(#tab-storage:checked) .sidebar-tab-label[for="tab-storage"],
+  body:has(#tab-recovery:checked) .sidebar-tab-label[for="tab-recovery"],
+  body:has(#tab-products:checked) .sidebar-tab-label[for="tab-products"] {
+    background: #00ff00;
+    color: #000;
+    border-color: #00ff00;
+  }
+  body:has(#tab-delete:checked) .sidebar-tab-label[for="tab-delete"] {
+    background: #ff9900;
+    color: #000;
+    border-color: #ff9900;
+  }
+}
+
+/* ボタン
+---------------------------------------------*/
+
+button,
+.button {
+  display: inline-block;
+  border-width: 0;
+  background: #00cccc;
+  color: #000;
+  padding: 8px 18px;
+  font-size: 14px;
+  border-radius: 5px;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 3px 3px #000;
+  transition: all 0.15s;
+}
+button:hover,
+.button:hover {
+  background: #00aacc;
+  box-shadow: 0px 0px #000;
+  transform: translate(3px, 3px);
+  text-decoration: none;
+  color: #000;
+}
+
+.danger,
+button.danger,
+.button.danger {
+  background: #ff9900;
+}
+.danger:hover,
+button.danger:hover,
+.button.danger:hover {
+  background: #ff6600;
+}
+
+.small,
+button.small,
+.button.small {
+  padding: 4px 10px;
+  font-size: 12px;
+  box-shadow: 2px 2px #000;
+}
+.small:hover,
+button.small:hover,
+.button.small:hover {
+  transform: translate(2px, 2px);
+}
+
+/* 保存容量の利用状況(ブロックバー)
+---------------------------------------------*/
+
+.usage_bar {
+  --usage-blocks: 20;
+  width: 100%;
+  height: 18px;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  background: #e0e0e0;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(0,0,0,0.12) 0,
+    rgba(0,0,0,0.12) 1px,
+    transparent 1px,
+    transparent calc(100% / var(--usage-blocks))
+  );
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.3);
+}
+.usage_bar_fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00cc66, #00aaff);
+  transition: width 0.3s;
+}
+
+.userdata_list {
+  margin: 10px 0 0;
+  padding: 0;
+}
+.userdata_list > li {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-bottom: 6px;
+}
+/* flexboxのgapに未対応の古いブラウザ向けフォールバック(gap対応ブラウザでは
+   下のfeature queryで0に打ち消します)。 */
+.userdata_list > li > * {
+  margin-right: 10px;
+}
+.userdata_name {
+  flex: 1 1 160px;
+  font-weight: bold;
+  word-break: break-all;
+}
+.userdata_size {
+  font-size: 12px;
+  color: #556;
+}
+
+.userdata_group {
+  margin-top: 14px;
+}
+.userdata_group h4 {
+  margin: 0 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #ccc;
+  color: #009900;
+}
+.userdata_group h4 .userdata_size {
+  font-weight: normal;
+}
+
+/* ヘッダーのログアウトボタンなど、見た目をリンクに寄せたボタン */
+.link_button {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: #00aaff;
+  font: inherit;
+  text-decoration: underline;
+  box-shadow: none;
+  cursor: pointer;
+}
+.link_button:hover {
+  background: none;
+  box-shadow: none;
+  transform: none;
+  color: #0077aa;
+}
+.nav_form {
+  display: inline;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #001400;
+    color: #fff;
+  }
+  a {
+    color: #00ffff;
+  }
+  a:hover {
+    color: #66ffff;
+  }
+  .app_link {
+    color: #fff;
+  }
+  .app_link:hover {
+    color: #fff;
+  }
+  .app_box-1 {
+    background-color: #222;
+  }
+  header::before {
+    background: rgba(0,0,0,0.6);
+  }
+  header h1 {
+    color: #00ff00;
+  }
+  .account_card {
+    background: #001a00;
+    box-shadow: 4px 4px 0px rgba(0,255,0,0.15);
+  }
+  .account_card h2 {
+    color: #00ff00;
+  }
+  .account_form label {
+    color: #cfc;
+  }
+  .account_form input,
+  .account_form textarea {
+    background: #000;
+    border-color: #050;
+    color: #fff;
+  }
+  button,
+  .button {
+    color: #000;
+    box-shadow: 3px 3px #000;
+  }
+  .link_button {
+    color: #00ffff;
+  }
+  .link_button:hover {
+    color: #66ffff;
+  }
+  .usage_bar {
+    background: #002200;
+    background-image: repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.15) 0,
+      rgba(255,255,255,0.15) 1px,
+      transparent 1px,
+      transparent calc(100% / var(--usage-blocks))
+    );
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3);
+  }
+  .userdata_list > li {
+    border-color: #050;
+  }
+  .userdata_size {
+    color: #9c9;
+  }
+  .userdata_group h4 {
+    border-bottom-color: #050;
+    color: #00ff00;
+  }
+  .sidebar,
+  .tab-section {
+    background: #001a00;
+    box-shadow: 4px 4px 0px rgba(0,255,0,0.15);
+  }
+  .sidebar-name,
+  .tab-section h2 {
+    color: #00ff00;
+  }
+  .sidebar-sub,
+  .sidebar-stats {
+    color: #9c9;
+  }
+  .sidebar-stats,
+  .sidebar-tab-labels,
+  .sidebar-tab-anchors,
+  .sidebar-logout {
+    border-top-color: #050;
+  }
+  .sidebar-tab-label {
+    border-color: #050;
+    color: #9c9;
+  }
+  .profile_preview {
+    border-bottom-color: #050;
+  }
+  .profile_preview_username {
+    color: #9c9;
+  }
+  .settings-notice {
+    background: #001a00;
+    box-shadow: 4px 4px 0px rgba(0,255,0,0.15);
+    border-left-color: #00ff00;
+  }
+  .settings-notice.error {
+    border-left-color: #ff6666;
+  }
+  .recovery-warning {
+    background: #1a0000;
+    border-color: #ff6666;
+  }
+  .recovery-card {
+    background: #001400;
+    border-color: #0f0;
+  }
+  .recovery-storage-advice {
+    background: #001a20;
+    border-left-color: #00ffff;
+    color: #fff;
+  }
+}
+
+@media (max-width: 600px) {
+  .account_card {
+    padding: 20px;
+  }
+}
+
+/* リカバリコード発行フロー */
+.recovery-warning {
+  border: 2px solid #dc2626;
+  border-radius: 8px;
+  padding: 16px 20px;
+  background: #fff5f5;
+  color: #1a1a1a;
+}
+.recovery-card {
+  border: 1px dashed #333;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 12px 0;
+  background: #fff;
+  color: #1a1a1a;
+}
+.recovery-card ol {
+  padding-left: 1.4em;
+}
+.recovery-card code {
+  font-size: 1.05em;
+}
+.recovery-card-actions {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+.recovery-storage-advice {
+  border-left: 4px solid #00aacc;
+  padding: 4px 16px;
+  margin: 16px 0;
+  background: #f4fcff;
+  color: #1a1a1a;
+}
+.recovery-storage-advice h3 {
+  margin-top: 0;
+}
+.recovery-storage-advice ul {
+  padding-left: 1.4em;
+  margin: 4px 0 12px;
+}
+.error {
+  color: #dc2626;
+  font-weight: bold;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #recovery-print-area,
+  #recovery-print-area * {
+    visibility: visible;
+  }
+  #recovery-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

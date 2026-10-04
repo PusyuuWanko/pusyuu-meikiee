@@ -1,0 +1,39 @@
+# =====================================================================
+# 公開してはいけない物の一覧です。1行でも消すと、次の `git add .` で
+# 実在する利用者のデータや鍵が公開リポジトリに入ります。
+# =====================================================================
+
+# --- 鍵・秘密(env相当。本来は ../.pusyuuHiddenFiles/ に置く物) ---
+.pusyuuHiddenFiles/
+.env
+.env.*
+*_key.php
+*_credentials.php
+private_key_pem.php
+*.pem
+
+# --- 運用中に溜まる利用者データ・ログ・作業ファイル ---
+*.jsonl
+*.sqlite
+*.sqlite3
+*.db
+*.enc
+*.lock
+*.bak
+*.tmp
+*.log
+.lock
+
+# --- OS・エディタ・ツール ---
+.claude/
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# --- アカウント・利用者ファイルの実データ ---
+assets/posts/*
+assets/avatars/*
+p_drive_storage/*
+!p_drive_storage/.htaccess
